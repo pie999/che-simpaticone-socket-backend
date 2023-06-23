@@ -43,7 +43,8 @@ io.on("connection", (socket) => {
     });
     lobbiesArr[lobbyIndex].answersCount++;
     if (lobbiesArr[lobbyIndex].answersCount === lobby.users.length) {
-      io.to(lobby.name).emit("submit-answer", lobbiesArr[lobbyIndex]);
+      lobbiesArr[lobbyIndex].users;
+      io.to(lobby.name).emit("submit-answer", shuffle(lobbiesArr[lobbyIndex]));
       lobbiesArr[lobbyIndex].answersCount = 0;
     }
   });
@@ -93,5 +94,20 @@ io.on("connection", (socket) => {
         else if (u.id === lobby.ownerId) lobby.ownerId = lobby.users[0].id;
       }
     });
+  }
+
+  function shuffle(array) {
+    let m = array.length;
+
+    // While there remain elements to shuffle…
+    while (m) {
+      // Pick a remaining element…
+      let i = Math.floor(Math.random() * m--);
+
+      // And swap it with the current element.
+      [array[m], array[i]] = [array[i], array[m]];
+    }
+
+    return array;
   }
 });
