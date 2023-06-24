@@ -6,6 +6,7 @@ const io = new Server(3000, { cors: { origin: "*" } });
 let usersArr = [];
 let lobbiesArr = [];
 
+// TODO: CHECK IF USER OR LOBBY NAME ALREADY EXISTS BEFORE CREATION
 io.on("connection", (socket) => {
   socket.on("new-user", (newUser) => {
     usersArr.push(newUser);
@@ -25,16 +26,19 @@ io.on("connection", (socket) => {
     removeCurrentUserFromSpecificLobby(lobbyIndex);
     io.emit("lobby-exit", lobbiesArr);
   });
-  socket.on("game-start", (lobbyIndex) => {
+  socket.on("game-start", (lobby) => {
+    const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
     lobbiesArr[lobbyIndex].answersCount = 0;
+    lobbiesArr[lobbyIndex].currentRound = 1;
+    lobbiesArr[lobbyIndex].totalRounds = 1; // NUMBER OF ROUNDS ---------
     lobbiesArr[lobbyIndex].users.forEach((u) => {
       u.currentScore = 0;
       u.totalScore = 0;
     });
-    io.emit("game-start", lobbiesArr, lobbyIndex);
+    io.emit("game-start", lobbiesArr[lobbyIndex]);
   });
-  socket.on("join-room", (lobbyIndex) => {
-    socket.join(lobbiesArr[lobbyIndex].name);
+  socket.on("join-room", (lobby) => {
+    socket.join(lobby.name);
   });
   socket.on("submit-answer", (answer, lobby) => {
     const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
@@ -43,8 +47,8 @@ io.on("connection", (socket) => {
     });
     lobbiesArr[lobbyIndex].answersCount++;
     if (lobbiesArr[lobbyIndex].answersCount === lobby.users.length) {
-      lobbiesArr[lobbyIndex].users;
-      io.to(lobby.name).emit("submit-answer", shuffle(lobbiesArr[lobbyIndex]));
+      lobbiesArr[lobbyIndex].users = shuffle(lobbiesArr[lobbyIndex].users);
+      io.to(lobby.name).emit("submit-answer", lobbiesArr[lobbyIndex]);
       lobbiesArr[lobbyIndex].answersCount = 0;
     }
   });
@@ -60,6 +64,24 @@ io.on("connection", (socket) => {
       lobbiesArr[lobbyIndex].answersCount = 0;
       lobbiesArr[lobbyIndex].users.forEach((u) => (u.currentScore = 0));
     }
+  });
+  socket.on("next-round", (lobby) => {
+    const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
+    lobbiesArr[lobbyIndex].currentRound++;
+    if (
+      lobbiesArr[lobbyIndex].currentRound > lobbiesArr[lobbyIndex].totalRounds
+    ) {
+      lobbiesArr[lobbyIndex].users.sort((a, b) => b.totalScore - a.totalScore);
+      io.to(lobby.name).emit("game-over", lobbiesArr[lobbyIndex]);
+    } else {
+      io.to(lobby.name).emit("next-round", lobbiesArr[lobbyIndex]);
+    }
+  });
+  socket.on("end-lobby", (lobby) => {
+    io.to(lobby.name).emit("end-lobby", lobby);
+  });
+  socket.on("leave-room", (lobby) => {
+    socket.leave(lobby.name);
   });
   socket.on("disconnect", () => {
     removeCurrentUserFromUsers();
