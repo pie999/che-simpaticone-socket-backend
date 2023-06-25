@@ -8,13 +8,24 @@ let lobbiesArr = [];
 
 // TODO: CHECK IF USER OR LOBBY NAME ALREADY EXISTS BEFORE CREATION
 io.on("connection", (socket) => {
-  socket.on("new-user", (newUser) => {
-    usersArr.push(newUser);
-    io.emit("new-user", usersArr, lobbiesArr);
+  socket.on("new-user", (username) => {
+    if (usersArr.some((user) => user.name === username)) {
+      socket.emit("username-exists");
+    } else {
+      usersArr.push({ name: username, id: socket.id });
+      socket.emit("join-successful");
+      io.emit("new-user", usersArr, lobbiesArr);
+    }
   });
-  socket.on("new-lobby", (newLobby) => {
-    lobbiesArr.push(newLobby);
-    io.emit("new-lobby", lobbiesArr);
+  socket.on("new-lobby", (lobbyName) => {
+    if (lobbiesArr.some((lobby) => lobby.name === lobbyName)) {
+      socket.emit("lobbyname-exists");
+    } else {
+      const user = usersArr.find((user) => user.id === socket.id);
+      lobbiesArr.push({ name: lobbyName, ownerId: socket.id, users: [user] });
+      socket.emit("create-lobby-successful");
+      io.emit("new-lobby", lobbiesArr);
+    }
   });
   socket.on("lobby-join", (lobbyName, user) => {
     removeCurrentUserFromLobbies();
