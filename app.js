@@ -1,7 +1,9 @@
 require("dotenv").config();
 const { Server } = require("socket.io");
 
-const io = new Server(3000, { cors: { origin: "*" } });
+const io = new Server(process.env.PORT || 3000, { cors: { origin: "*" } });
+
+const promptArr = require("./prompts");
 
 let usersArr = [];
 let lobbiesArr = [];
@@ -41,7 +43,9 @@ io.on("connection", (socket) => {
     const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
     lobbiesArr[lobbyIndex].answersCount = 0;
     lobbiesArr[lobbyIndex].currentRound = 1;
-    lobbiesArr[lobbyIndex].totalRounds = 1; // NUMBER OF ROUNDS ---------
+    lobbiesArr[lobbyIndex].totalRounds = 2; // NUMBER OF ROUNDS ---------
+    lobbiesArr[lobbyIndex].letter = getRandomAlphabetLetter();
+    lobbiesArr[lobbyIndex].prompt = getRandomPrompt();
     lobbiesArr[lobbyIndex].users.forEach((u) => {
       u.currentScore = 0;
       u.totalScore = 0;
@@ -85,6 +89,8 @@ io.on("connection", (socket) => {
       lobbiesArr[lobbyIndex].users.sort((a, b) => b.totalScore - a.totalScore);
       io.to(lobby.name).emit("game-over", lobbiesArr[lobbyIndex]);
     } else {
+      lobbiesArr[lobbyIndex].letter = getRandomAlphabetLetter();
+      lobbiesArr[lobbyIndex].prompt = getRandomPrompt();
       io.to(lobby.name).emit("next-round", lobbiesArr[lobbyIndex]);
     }
   });
@@ -127,6 +133,15 @@ io.on("connection", (socket) => {
         else if (u.id === lobby.ownerId) lobby.ownerId = lobby.users[0].id;
       }
     });
+  }
+
+  function getRandomAlphabetLetter() {
+    const alphabet = "abcdefghijklmnopqrstuvwxyz";
+    return alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+
+  function getRandomPrompt() {
+    return promptArr[Math.floor(Math.random() * promptArr.length)];
   }
 
   function shuffle(array) {
