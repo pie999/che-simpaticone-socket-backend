@@ -136,7 +136,7 @@ io.on("connection", (socket) => {
   }
 
   function getRandomAlphabetLetter() {
-    const alphabet = "abcdefghijklmnopqrstuvwxyz";
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     return alphabet[Math.floor(Math.random() * alphabet.length)];
   }
 
