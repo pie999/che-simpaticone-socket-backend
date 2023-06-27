@@ -39,11 +39,11 @@ io.on("connection", (socket) => {
     removeCurrentUserFromSpecificLobby(lobbyIndex);
     io.emit("lobby-exit", lobbiesArr);
   });
-  socket.on("game-start", (lobby) => {
+  socket.on("game-start", (lobby, numberOfRounds) => {
     const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
     lobbiesArr[lobbyIndex].answersCount = 0;
     lobbiesArr[lobbyIndex].currentRound = 1;
-    lobbiesArr[lobbyIndex].totalRounds = 2; // NUMBER OF ROUNDS ---------
+    lobbiesArr[lobbyIndex].totalRounds = numberOfRounds;
     lobbiesArr[lobbyIndex].letter = getRandomAlphabetLetter();
     lobbiesArr[lobbyIndex].prompt = getRandomPrompt();
     lobbiesArr[lobbyIndex].users.forEach((u) => {
