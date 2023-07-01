@@ -24,7 +24,12 @@ io.on("connection", (socket) => {
       socket.emit("lobbyname-exists");
     } else {
       const user = usersArr.find((user) => user.id === socket.id);
-      lobbiesArr.push({ name: lobbyName, ownerId: socket.id, users: [user] });
+      lobbiesArr.push({
+        name: lobbyName,
+        inGame: false,
+        ownerId: socket.id,
+        users: [user],
+      });
       socket.emit("create-lobby-successful");
       io.emit("new-lobby", lobbiesArr);
     }
@@ -41,6 +46,7 @@ io.on("connection", (socket) => {
   });
   socket.on("game-start", (lobby, numberOfRounds) => {
     const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
+    lobbiesArr[lobbyIndex].inGame = true;
     lobbiesArr[lobbyIndex].answersCount = 0;
     lobbiesArr[lobbyIndex].currentRound = 1;
     lobbiesArr[lobbyIndex].totalRounds = numberOfRounds;
@@ -50,7 +56,7 @@ io.on("connection", (socket) => {
       u.currentScore = 0;
       u.totalScore = 0;
     });
-    io.emit("game-start", lobbiesArr[lobbyIndex]);
+    io.emit("game-start", lobbiesArr, lobbyIndex);
   });
   socket.on("join-room", (lobby) => {
     socket.join(lobby.name);
@@ -94,8 +100,10 @@ io.on("connection", (socket) => {
       io.to(lobby.name).emit("next-round", lobbiesArr[lobbyIndex]);
     }
   });
-  socket.on("end-lobby", (lobby) => {
-    io.to(lobby.name).emit("end-lobby", lobby);
+  socket.on("end-game", (lobby) => {
+    const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
+    lobbiesArr[lobbyIndex].inGame = false;
+    io.to(lobby.name).emit("end-game", lobby);
   });
   socket.on("leave-room", (lobby) => {
     socket.leave(lobby.name);
