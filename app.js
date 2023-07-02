@@ -8,7 +8,6 @@ const promptArr = require("./prompts");
 let usersArr = [];
 let lobbiesArr = [];
 
-// TODO: CHECK IF USER OR LOBBY NAME ALREADY EXISTS BEFORE CREATION
 io.on("connection", (socket) => {
   socket.on("new-user", (username) => {
     if (usersArr.some((user) => user.name === username)) {
@@ -63,7 +62,7 @@ io.on("connection", (socket) => {
   });
   socket.on("submit-answer", (answer, lobby) => {
     const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
-    lobbiesArr[lobbyIndex].users.forEach((u, i) => {
+    lobbiesArr[lobbyIndex].users.forEach((u) => {
       if (u.id === socket.id) u.answer = answer;
     });
     lobbiesArr[lobbyIndex].answersCount++;
@@ -104,6 +103,7 @@ io.on("connection", (socket) => {
     const lobbyIndex = lobbiesArr.findIndex((l) => l.name === lobby.name);
     lobbiesArr[lobbyIndex].inGame = false;
     io.to(lobby.name).emit("end-game", lobby);
+    io.emit("lobby-ended-game", lobbiesArr);
   });
   socket.on("leave-room", (lobby) => {
     socket.leave(lobby.name);
