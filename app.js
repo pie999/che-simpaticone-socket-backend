@@ -95,6 +95,16 @@ io.on("connection", (socket) => {
       io.to(lobby.name).emit("next-round", lobby);
     }
   });
+  socket.on("new-game", (lobbyName) => {
+    const lobby = getLobbyFromName(lobbyName);
+    lobby.currentRound = 1;
+    lobby.letter = getRandomAlphabetLetter();
+    lobby.prompt = getRandomPrompt();
+    lobby.users.forEach((u) => {
+      u.totalScore = 0;
+    });
+    io.to(lobby.name).emit("new-game", lobby);
+  });
   socket.on("end-game", (lobbyName) => {
     const lobby = getLobbyFromName(lobbyName);
     lobby.inGame = false;
